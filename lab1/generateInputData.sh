@@ -14,7 +14,7 @@ METRIC_IDS=($(seq 1 9))
 fileName=$1
 getMetricLine() {
 	sleep `echo "scale=2; $RANDOM/$((32767*2))" | bc` # Add randomness to timestamp intervals
-	echo "${METRIC_IDS[$((RANDOM % ${#METRIC_IDS[*]}))]} $(/usr/bin/date +%s) $RANDOM" >> input/$fileName.$1
+	echo "${METRIC_IDS[$((RANDOM % ${#METRIC_IDS[*]}))]}, $(/usr/bin/date +%s), $RANDOM" >> input/$fileName.$1
 }
 
 rm -rf input
