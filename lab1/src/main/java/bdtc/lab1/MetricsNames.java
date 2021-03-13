@@ -17,7 +17,7 @@ public class MetricsNames {
      * @return название метрики в виде строки
      */
     public static String getNameById(int id) {
-        if (id > 0 && id < metricNames.length) {
+        if (id > 0 && id < metricNames.length + 1) {
             return metricNames[id - 1];
         }
         return null;

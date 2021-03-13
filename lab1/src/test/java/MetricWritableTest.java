@@ -72,7 +72,7 @@ public class MetricWritableTest {
                 MetricWritable metric = new MetricWritable(String.valueOf(i) + c);
                 for (String line : possibleInputLines) {
                     metric.parse(line);
-                    String[] lineParts = line.split(metric.separator);
+                    String[] lineParts = line.split(metric.separator + "\\s*");
                     int metricScore = Integer.parseInt(lineParts[2]);
                     assertEquals("Metric value should parse correctly", metricScore, metric.getScore());
                     int timestamp = Integer.parseInt(lineParts[1]) / (i * spanMap.get(c));

@@ -17,7 +17,7 @@ import java.util.regex.Pattern;
  */
 public class MetricWritable implements WritableComparable<MetricWritable> {
 
-    public final String separator = ", ";
+    public final String separator = ",";
 
     // идентификатор метрики
     private int metricId;
@@ -85,7 +85,7 @@ public class MetricWritable implements WritableComparable<MetricWritable> {
      */
     public void parse(String line) throws InputMismatchException {
         if (stringMatchesPattern(line, "\\d+,\\s\\d+,\\s\\d+")) {
-            String[] cells = line.split(separator);
+            String[] cells = line.split(separator + "\\s*");
             metricId = Integer.parseInt(cells[0]);
             timestamp = Integer.parseInt(cells[1]) / span;
             score = Integer.parseInt(cells[2]);

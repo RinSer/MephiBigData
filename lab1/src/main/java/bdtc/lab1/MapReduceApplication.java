@@ -31,7 +31,7 @@ public class MapReduceApplication {
         job.setJarByClass(MapReduceApplication.class);
         job.setMapperClass(HW1Mapper.class);
         job.setReducerClass(HW1Reducer.class);
-        job.setOutputKeyClass(Text.class);
+        job.setOutputKeyClass(MetricWritable.class);
         job.setOutputValueClass(LongWritable.class);
         job.setOutputFormatClass(TextOutputFormat.class);
 
