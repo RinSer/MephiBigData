@@ -16,14 +16,18 @@ public class MapReduceApplication {
 
     public static void main(String[] args) throws Exception {
 
-        if (args.length < 2) {
-            throw new RuntimeException("You should specify input and output folders!");
+        if (args.length < 3) {
+            throw new RuntimeException(
+                    "You should specify input, output folders and scale in format: \\d+[s|m|h|d|w]!"
+            );
         }
         Configuration conf = new Configuration();
         // задаём выходной файл, разделенный запятыми - формат CSV в соответствии с заданием
         conf.set("mapreduce.output.textoutputformat.separator", ",");
+        // передаём временной диапазон аггрегации для маппера
+        conf.set("scale", args[2]);
 
-        Job job = Job.getInstance(conf, "metrics scaled count");
+        Job job = Job.getInstance(conf, "metrics' scores scaled counts");
         job.setJarByClass(MapReduceApplication.class);
         job.setMapperClass(HW1Mapper.class);
         job.setReducerClass(HW1Reducer.class);
