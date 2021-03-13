@@ -3,9 +3,8 @@ package bdtc.lab1;
 import lombok.extern.log4j.Log4j;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.io.IntWritable;
+import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
-import org.apache.hadoop.mapreduce.Counter;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
@@ -24,12 +23,12 @@ public class MapReduceApplication {
         // задаём выходной файл, разделенный запятыми - формат CSV в соответствии с заданием
         conf.set("mapreduce.output.textoutputformat.separator", ",");
 
-        Job job = Job.getInstance(conf, "browser count");
+        Job job = Job.getInstance(conf, "metrics scaled count");
         job.setJarByClass(MapReduceApplication.class);
         job.setMapperClass(HW1Mapper.class);
         job.setReducerClass(HW1Reducer.class);
         job.setOutputKeyClass(Text.class);
-        job.setOutputValueClass(IntWritable.class);
+        job.setOutputValueClass(LongWritable.class);
         job.setOutputFormatClass(TextOutputFormat.class);
 
         Path outputDirectory = new Path(args[1]);
@@ -38,8 +37,5 @@ public class MapReduceApplication {
         log.info("=====================JOB STARTED=====================");
         job.waitForCompletion(true);
         log.info("=====================JOB ENDED=====================");
-        // проверяем статистику по счётчикам
-        Counter counter = job.getCounters().findCounter(CounterType.MALFORMED);
-        log.info("=====================COUNTERS " + counter.getName() + ": " + counter.getValue() + "=====================");
     }
 }
