@@ -27,7 +27,7 @@ public class MetricWritable implements WritableComparable<MetricWritable> {
     public int scaleSize;
     public char scaleUnit;
     // временной диапазон в виде числа в секундах
-    private int span;
+    public int span;
     // значение метрики
     private long score;
 
@@ -70,7 +70,7 @@ public class MetricWritable implements WritableComparable<MetricWritable> {
      * соответствия строки шаблону
      * @param input строка, которую надо проверить
      * @param match проверочный шаблон в виде регулярного выражения
-     * @return соответствует или нет
+     * @return соответствует строка шаблону или нет (истина/ложь)
      */
     private boolean stringMatchesPattern(String input, String match) {
         Pattern pattern = Pattern.compile(match, Pattern.CASE_INSENSITIVE);
@@ -101,7 +101,7 @@ public class MetricWritable implements WritableComparable<MetricWritable> {
     public long getScore() { return score; }
 
     /**
-     * Возвращает ключ для аггрегации
+     * Возвращает ключ для финальной аггрегации
      * @return название метрики + разделитель + отметка времени + разделитель + диапазон времени
      */
     public Text getKey() {

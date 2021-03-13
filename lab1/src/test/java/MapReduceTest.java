@@ -13,7 +13,9 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-
+/**
+ * Тесты функционала маппера, редьюсера и мапредьюсера
+ */
 public class MapReduceTest {
 
     private MapDriver<LongWritable, Text, MetricWritable, LongWritable> mapDriver;
@@ -29,6 +31,14 @@ public class MapReduceTest {
     private final String testMetric3 = "3, 1615575255, 55";
     private final MetricWritable metric3 = new MetricWritable("1m");
 
+    private final String testMetric4 = "5, 1615575253, 77";
+    private final MetricWritable metric4 = new MetricWritable("1m");
+
+    /**
+     * Подготавливаем и конфигурируем драйверы для маппера, редьюсера
+     * и мапредьюсера, а также тестовые метрики.
+     * @throws IOException
+     */
     @Before
     public void setUp() throws IOException {
         HW1Mapper mapper = new HW1Mapper();
@@ -41,8 +51,14 @@ public class MapReduceTest {
         metric1.parse(testMetric1);
         metric2.parse(testMetric2);
         metric3.parse(testMetric3);
+        metric4.parse(testMetric4);
     }
 
+    /**
+     * Проверяем работу маппера: при передачи строки
+     * он должен вернуть объект метрики и её значение.
+     * @throws IOException
+     */
     @Test
     public void testMapper() throws IOException {
         LongWritable testScore = new LongWritable(metric1.getScore());
@@ -52,20 +68,36 @@ public class MapReduceTest {
                 .runTest();
     }
 
+    /**
+     * Проверяем работу редьюсера: должен возвращать верные
+     * среднии значения для одной, двух и трех аггрегируемых метрик.
+     * @throws IOException
+     */
     @Test
     public void testReducer() throws IOException {
         List<LongWritable> metrics = new ArrayList<>();
         metrics.add(new LongWritable(metric1.getScore()));
-        metrics.add(new LongWritable(metric2.getScore()));
         reduceDriver
                 .withInput(metric1, metrics)
-                .withOutput(
-                        metric1.getKey(),
-                        new LongWritable((metric1.getScore() + metric2.getScore())/2)
-                )
+                .withOutput(metric1.getKey(), new LongWritable(metric1.getScore()));
+        metrics.add(new LongWritable(metric2.getScore()));
+        long average = (metric1.getScore() + metric2.getScore()) / 2;
+        reduceDriver
+                .withInput(metric2, metrics)
+                .withOutput(metric2.getKey(), new LongWritable(average));
+        metrics.add(new LongWritable(metric4.getScore()));
+        average = (metric1.getScore() + metric2.getScore() + metric4.getScore()) / 3;
+        reduceDriver
+                .withInput(metric4, metrics)
+                .withOutput(metric4.getKey(), new LongWritable(average))
                 .runTest();
     }
 
+    /**
+     * Проверяем работу мапредьюсера: получив на вход две метрики
+     * или одну он должен их правильно саггрегировать.
+     * @throws IOException
+     */
     @Test
     public void testMapReduce() throws IOException {
         mapReduceDriver
