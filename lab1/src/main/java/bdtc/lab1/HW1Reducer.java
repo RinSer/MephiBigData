@@ -23,7 +23,7 @@ public class HW1Reducer extends Reducer<MetricWritable, LongWritable, Text, Long
         }
 
         context.write(
-            new Text(metricWithStamp.getKey()),
+            new Text(metricWithStamp.getFinalKey()),
             new LongWritable(sum / count)
         );
     }

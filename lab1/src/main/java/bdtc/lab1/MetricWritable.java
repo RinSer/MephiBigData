@@ -7,6 +7,7 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.util.InputMismatchException;
+import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -16,13 +17,10 @@ import java.util.regex.Pattern;
  * непосредственно в вычислениях редьюсера
  */
 public class MetricWritable implements WritableComparable<MetricWritable> {
-
-    public final String separator = ",";
-
     // идентификатор метрики
-    private int metricId;
+    public int metricId;
     // отметка вермени, поделенная на диапазон
-    private int timestamp;
+    public int timestamp;
     // временной диапазон в виде строки
     public int scaleSize;
     public char scaleUnit;
@@ -30,6 +28,8 @@ public class MetricWritable implements WritableComparable<MetricWritable> {
     public int span;
     // значение метрики
     private long score;
+
+    public final String separator = ",";
 
     // Default constructor to allow (de)serialization
     MetricWritable() {}
@@ -104,7 +104,7 @@ public class MetricWritable implements WritableComparable<MetricWritable> {
      * Возвращает ключ для финальной аггрегации
      * @return название метрики + разделитель + отметка времени + разделитель + диапазон времени
      */
-    public Text getKey() {
+    public Text getFinalKey() {
         String metricName = MetricsNames.getNameById(metricId);
         return new Text(metricName + separator + timestamp + separator + scaleSize + scaleUnit);
     }
@@ -112,24 +112,30 @@ public class MetricWritable implements WritableComparable<MetricWritable> {
     public void write(DataOutput out) throws IOException {
         out.writeInt(metricId);
         out.writeInt(timestamp);
+        out.writeLong(score);
         out.writeInt(scaleSize);
         out.writeChar(scaleUnit);
         out.writeInt(span);
-        out.writeLong(score);
     }
 
     public void readFields(DataInput in) throws IOException {
         metricId = in.readInt();
         timestamp = in.readInt();
+        score = in.readLong();
         scaleSize = in.readInt();
         scaleUnit = in.readChar();
         span = in.readInt();
-        score = in.readLong();
     }
 
+    @Override
     public int compareTo(MetricWritable other) {
-        return this.metricId == other.metricId && this.timestamp == other.timestamp ? 0
-                : this.timestamp < other.timestamp ? -1 : 1;
+        int metricsCompare = Integer.compare(metricId, other.metricId);
+        return metricsCompare != 0 ? metricsCompare : Integer.compare(timestamp, other.timestamp);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(metricId, timestamp);
     }
 
     @Override

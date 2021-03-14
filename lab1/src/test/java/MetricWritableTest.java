@@ -80,7 +80,7 @@ public class MetricWritableTest {
                     assertEquals(
                 "Metric id and timestamp should parse correctly",
                 MetricsNames.getNameById(metricId) + metric.separator + timestamp + metric.separator + i + c,
-                        metric.getKey().toString()
+                        metric.getFinalKey().toString()
                     );
                 }
             }

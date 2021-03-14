@@ -29,9 +29,17 @@ public class MapReduceApplication {
 
         Job job = Job.getInstance(conf, "metrics' scores scaled counts");
         job.setJarByClass(MapReduceApplication.class);
+
         job.setMapperClass(HW1Mapper.class);
         job.setReducerClass(HW1Reducer.class);
-        job.setOutputKeyClass(MetricWritable.class);
+
+        job.setGroupingComparatorClass(MetricsComparator.class);
+        job.setSortComparatorClass(MetricsComparator.class);
+
+        job.setMapOutputKeyClass(MetricWritable.class);
+        job.setMapOutputValueClass(LongWritable.class);
+
+        job.setOutputKeyClass(Text.class);
         job.setOutputValueClass(LongWritable.class);
         job.setOutputFormatClass(TextOutputFormat.class);
 

@@ -1,8 +1,11 @@
 import bdtc.lab1.HW1Mapper;
 import bdtc.lab1.HW1Reducer;
 import bdtc.lab1.MetricWritable;
+import bdtc.lab1.MetricsComparator;
 import org.apache.hadoop.io.LongWritable;
+import org.apache.hadoop.io.RawComparator;
 import org.apache.hadoop.io.Text;
+import org.apache.hadoop.io.WritableComparator;
 import org.apache.hadoop.mrunit.mapreduce.MapDriver;
 import org.apache.hadoop.mrunit.mapreduce.MapReduceDriver;
 import org.apache.hadoop.mrunit.mapreduce.ReduceDriver;
@@ -47,6 +50,9 @@ public class MapReduceTest {
         mapDriver.getContext().getConfiguration().set("scale", "1m");
         reduceDriver = ReduceDriver.newReduceDriver(reducer);
         mapReduceDriver = MapReduceDriver.newMapReduceDriver(mapper, reducer);
+        RawComparator<MetricWritable> comparator = new MetricsComparator();
+        mapReduceDriver.withKeyGroupingComparator(comparator);
+        mapReduceDriver.withKeyOrderComparator(comparator);
         mapReduceDriver.getConfiguration().set("scale", "1m");
         metric1.parse(testMetric1);
         metric2.parse(testMetric2);
@@ -79,17 +85,17 @@ public class MapReduceTest {
         metrics.add(new LongWritable(metric1.getScore()));
         reduceDriver
                 .withInput(metric1, metrics)
-                .withOutput(metric1.getKey(), new LongWritable(metric1.getScore()));
+                .withOutput(metric1.getFinalKey(), new LongWritable(metric1.getScore()));
         metrics.add(new LongWritable(metric2.getScore()));
         long average = (metric1.getScore() + metric2.getScore()) / 2;
         reduceDriver
                 .withInput(metric2, metrics)
-                .withOutput(metric2.getKey(), new LongWritable(average));
+                .withOutput(metric2.getFinalKey(), new LongWritable(average));
         metrics.add(new LongWritable(metric4.getScore()));
         average = (metric1.getScore() + metric2.getScore() + metric4.getScore()) / 3;
         reduceDriver
                 .withInput(metric4, metrics)
-                .withOutput(metric4.getKey(), new LongWritable(average))
+                .withOutput(metric4.getFinalKey(), new LongWritable(average))
                 .runTest();
     }
 
@@ -105,12 +111,12 @@ public class MapReduceTest {
                 .withInput(new LongWritable(), new Text(testMetric2))
                 .withInput(new LongWritable(), new Text(testMetric3))
                 .withOutput(
-                        metric1.getKey(),
-                        new LongWritable((metric1.getScore() + metric2.getScore())/2)
+                        metric3.getFinalKey(),
+                        new LongWritable(metric3.getScore())
                 )
                 .withOutput(
-                        metric3.getKey(),
-                        new LongWritable(metric3.getScore())
+                        metric1.getFinalKey(),
+                        new LongWritable((metric1.getScore() + metric2.getScore())/2)
                 )
                 .runTest();
     }

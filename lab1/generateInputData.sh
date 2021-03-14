@@ -1,4 +1,5 @@
 #!/bin/bash
+
 if [[ $# -lt 3 ]] ; then
     echo 'You should specify number of files, number of lines in each and time scale!'
     exit 1
