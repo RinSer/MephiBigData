@@ -1,0 +1,1 @@
+hdfs dfs -text /user/hduser/output/part-r-00000

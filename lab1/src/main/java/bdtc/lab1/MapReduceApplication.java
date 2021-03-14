@@ -8,7 +8,7 @@ import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
-import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
+import org.apache.hadoop.mapreduce.lib.output.SequenceFileOutputFormat;
 
 
 @Log4j
@@ -22,8 +22,6 @@ public class MapReduceApplication {
             );
         }
         Configuration conf = new Configuration();
-        // задаём выходной файл, разделенный запятыми - формат CSV в соответствии с заданием
-        conf.set("mapreduce.output.textoutputformat.separator", ",");
         // передаём временной диапазон аггрегации для маппера
         conf.set("scale", args[2]);
 
@@ -41,7 +39,9 @@ public class MapReduceApplication {
 
         job.setOutputKeyClass(Text.class);
         job.setOutputValueClass(LongWritable.class);
-        job.setOutputFormatClass(TextOutputFormat.class);
+
+        // Формат выходного файла = SequenceFile
+        job.setOutputFormatClass(SequenceFileOutputFormat.class);
 
         Path outputDirectory = new Path(args[1]);
         FileInputFormat.addInputPath(job, new Path(args[0]));
