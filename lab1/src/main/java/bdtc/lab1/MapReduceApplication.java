@@ -10,7 +10,9 @@ import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.mapreduce.lib.output.SequenceFileOutputFormat;
 
-
+/**
+ * Точка входа. Здесь задаются основные параметры hadoop job.
+ */
 @Log4j
 public class MapReduceApplication {
 
