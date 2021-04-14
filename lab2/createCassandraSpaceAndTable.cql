@@ -5,7 +5,7 @@ CREATE KEYSPACE flights
     };
 USE flights;
 CREATE TABLE counts (
-    time int,
+    time timestamp,
     departure text,
     arrival text,
     count int,

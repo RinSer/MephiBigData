@@ -22,20 +22,6 @@ public class FlightsAggregationApp {
 
     public static void main(String[] args) throws TimeoutException, IOException, StreamingQueryException {
 
-        Airports2CountriesMap airports2Countries = new Airports2CountriesMap("../app/data/airports2countries.txt");
-        UserDefinedFunction airport2country = udf((UDF1<String, Object>) airports2Countries::getCountry, DataTypes.StringType);
-
-        UserDefinedFunction convertBytes = udf((byte[] record) ->
-                new String(record, StandardCharsets.UTF_16), DataTypes.StringType);
-
-        UserDefinedFunction timestamp2hours = udf((Float timestamp) -> Math.round(timestamp) / 3600, DataTypes.IntegerType);
-
-        StructType scheme = new StructType()
-                .add("number", DataTypes.StringType)
-                .add("time", DataTypes.FloatType)
-                .add("departure", DataTypes.StringType)
-                .add("arrival", DataTypes.StringType);
-
         Logger.getLogger("org")
             .setLevel(Level.OFF);
         Logger.getLogger("akka")
@@ -60,8 +46,37 @@ public class FlightsAggregationApp {
                 .option("startingOffsets", "earliest")
                 .load();
 
-        Dataset<Row> flights = kafkaStream
-                .select(convertBytes.apply(kafkaStream.col("value")).alias("value"));
+        Dataset<Row> flights = aggregateFlights(kafkaStream);
+
+        StreamingQuery query = flights
+                .writeStream()
+                //.format("console")
+                .option("checkpointLocation", "/tmp/flights_check_points/")
+                .format("org.apache.spark.sql.cassandra")
+                .option("keyspace", "flights")
+                .option("table", "counts")
+                .outputMode(OutputMode.Append())
+                //.trigger(Trigger.Continuous("1 second"))
+                .start();
+
+        query.awaitTermination();
+    }
+
+    public static Dataset<Row> aggregateFlights(Dataset<Row> stream) throws IOException {
+        Airports2CountriesMap airports2Countries = new Airports2CountriesMap("../app/data/airports2countries.txt");
+        UserDefinedFunction airport2country = udf((UDF1<String, Object>) airports2Countries::getCountry, DataTypes.StringType);
+
+        UserDefinedFunction convertBytes = udf((byte[] record) ->
+                new String(record, StandardCharsets.UTF_16), DataTypes.StringType);
+
+        StructType scheme = new StructType()
+                .add("number", DataTypes.StringType)
+                .add("time", DataTypes.StringType)
+                .add("departure", DataTypes.StringType)
+                .add("arrival", DataTypes.StringType);
+
+        Dataset<Row> flights = stream
+                .select(convertBytes.apply(stream.col("value")).alias("value"));
 
         flights = flights
                 .select(functions.from_json(flights.col("value"), scheme).alias("value"))
@@ -69,40 +84,23 @@ public class FlightsAggregationApp {
 
         flights = flights
                 .drop(flights.col("number"))
-                .withColumn("time", timestamp2hours.apply(flights.col("time")))
+                .withColumn("time", functions.to_timestamp(
+                        functions.split(flights.col("time"), ":").getItem(0), "yyyy-MM-dd'T'HH"))
                 .withColumn("departure", airport2country.apply(flights.col("departure")))
                 .withColumn("arrival", airport2country.apply(flights.col("arrival")));
 
-        String timestamp = "timestamp";
         flights = flights
-                .withColumn(timestamp, functions.current_timestamp().as(timestamp))
-                .withWatermark(timestamp, "1 minutes");
-
-        flights = flights
+                .withWatermark("time", "60 minutes")
                 .groupBy(
                         flights.col("time"),
                         flights.col("departure"),
-                        flights.col("arrival"),
-                        flights.col(timestamp)
+                        flights.col("arrival")
                 )
                 .agg(
-                        functions.count(functions.lit(1)).alias("count"),
-                        functions.max(flights.col(timestamp)).alias(timestamp)
-                )
-                .drop(flights.col(timestamp));
+                        functions.count(functions.lit(1)).alias("count")
+                );
 
-        StreamingQuery query = flights
-                .writeStream()
-                .format("console")
-                //.option("checkpointLocation", "/tmp/flights_check_points/")
-                //.format("org.apache.spark.sql.cassandra")
-                //.option("keyspace", "flights")
-                //.option("table", "counts")
-                //.format("console")
-                .outputMode(OutputMode.Append())
-                //.trigger(Trigger.Continuous("1 second"))
-                .start();
-
-        query.awaitTermination();
+        return flights
+                .withWatermark("time", "60 minutes");
     }
 }
