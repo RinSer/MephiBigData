@@ -1,4 +1,5 @@
 import os, requests, json
+from datetime import datetime
 from kafka import KafkaProducer
 
 '''
@@ -37,7 +38,7 @@ for record in api_response['data']:
             # produce asynchronously with callbacks
             producer.send('flights', {
                 'number': flight_number, # номер рейса
-                'time': departure_time, # время вылета
+                'time': datetime.strptime(departure_time.split('+')[0], '%Y-%m-%dT%H:%M:%S').timestamp(), # время вылета
                 'departure': departure_airport, # аэропорт вылета
                 'arrival': arrival_airport # аэропорт назначения
             }).add_callback(on_send_success).add_errback(on_send_error)

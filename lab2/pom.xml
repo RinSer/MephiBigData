@@ -44,12 +44,7 @@
         </dependency>
         <dependency>
             <groupId>org.apache.spark</groupId>
-            <artifactId>spark-streaming_2.12</artifactId>
-            <version>3.1.1</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.spark</groupId>
-            <artifactId>spark-streaming-kafka-0-10_2.12</artifactId>
+            <artifactId>spark-sql-kafka-0-10_2.12</artifactId>
             <version>3.1.1</version>
         </dependency>
         <dependency>
@@ -61,6 +56,13 @@
             <groupId>com.datastax.spark</groupId>
             <artifactId>spark-cassandra-connector-java_2.11</artifactId>
             <version>1.6.0-M1</version>
+        </dependency>
+        <!-- https://mvnrepository.com/artifact/junit/junit -->
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.12</version>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 
@@ -80,7 +82,7 @@
                 <configuration>
                     <archive>
                         <manifest>
-                            <mainClass>bdtc.lab2.WordCountingAppWithCheckpoint</mainClass>
+                            <mainClass>bdtc.lab2.FlightsAggregationApp</mainClass>
                         </manifest>
                     </archive>
                     <descriptorRefs>
