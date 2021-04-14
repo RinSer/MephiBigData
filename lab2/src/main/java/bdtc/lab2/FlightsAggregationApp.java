@@ -4,6 +4,7 @@ import org.apache.spark.sql.*;
 import org.apache.spark.sql.api.java.UDF1;
 import org.apache.spark.sql.expressions.UserDefinedFunction;
 import static org.apache.spark.sql.functions.udf;
+
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.apache.spark.SparkConf;
@@ -20,7 +21,22 @@ import java.util.concurrent.TimeoutException;
 
 public class FlightsAggregationApp {
 
+    /**
+     * Точка входа в приложение
+     * Здесь конфигурируются соединения с очередью сообщений и бд,
+     * запускается спарк сессия, затем происходит аггрегирование
+     * и выгрузка данных в хранилище
+     * @param args путь к файлу с аэропортами и странами
+     * @throws TimeoutException
+     * @throws IOException
+     * @throws StreamingQueryException
+     */
     public static void main(String[] args) throws TimeoutException, IOException, StreamingQueryException {
+
+        if (args.length < 1)
+        {
+            throw new IOException("Необходимо указать путь к файлу с аэропортами и странами!");
+        }
 
         Logger.getLogger("org")
             .setLevel(Level.OFF);
@@ -44,9 +60,10 @@ public class FlightsAggregationApp {
                 .option("subscribe", "flights")
                 .option("kafka.group.id", "use_a_separate_group_id_for_each_stream")
                 .option("startingOffsets", "earliest")
+                .option("failOnDataLoss", false)
                 .load();
 
-        Dataset<Row> flights = aggregateFlights(kafkaStream);
+        Dataset<Row> flights = aggregateFlights(kafkaStream, args[0]);
 
         StreamingQuery query = flights
                 .writeStream()
@@ -55,15 +72,28 @@ public class FlightsAggregationApp {
                 .format("org.apache.spark.sql.cassandra")
                 .option("keyspace", "flights")
                 .option("table", "counts")
-                .outputMode(OutputMode.Append())
-                //.trigger(Trigger.Continuous("1 second"))
+                .option("confirm.truncate", "true")
+                .outputMode(OutputMode.Complete())
+                .trigger(Trigger.ProcessingTime("1 minutes"))
                 .start();
 
         query.awaitTermination();
     }
 
-    public static Dataset<Row> aggregateFlights(Dataset<Row> stream) throws IOException {
-        Airports2CountriesMap airports2Countries = new Airports2CountriesMap("../app/data/airports2countries.txt");
+    /**
+     * Преобразует и аггрегирует данные из входящего потока:
+     * переводит названия аэропортов в страны, а затем
+     * группирует записи по временному штампу (входящие штампы
+     * преобразуются в метки с нулем минут и секунд),
+     * стране отправления и прибытия, затем считает количество
+     * вылетов для каждой группировки
+     * @param stream входящий поток данных
+     * @param filePath путь к файлу с аэропортами и странами
+     * @return аггрегированный поточный датасет
+     * @throws IOException
+     */
+    public static Dataset<Row> aggregateFlights(Dataset<Row> stream, String filePath) throws IOException {
+        Airports2CountriesMap airports2Countries = new Airports2CountriesMap(filePath);
         UserDefinedFunction airport2country = udf((UDF1<String, Object>) airports2Countries::getCountry, DataTypes.StringType);
 
         UserDefinedFunction convertBytes = udf((byte[] record) ->
@@ -90,17 +120,13 @@ public class FlightsAggregationApp {
                 .withColumn("arrival", airport2country.apply(flights.col("arrival")));
 
         flights = flights
-                .withWatermark("time", "60 minutes")
                 .groupBy(
                         flights.col("time"),
                         flights.col("departure"),
                         flights.col("arrival")
                 )
-                .agg(
-                        functions.count(functions.lit(1)).alias("count")
-                );
+                .count();
 
-        return flights
-                .withWatermark("time", "60 minutes");
+        return flights;
     }
 }

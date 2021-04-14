@@ -11,7 +11,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.stream.Collectors;
 
-public class Airports2CountriesMapTests {
+public class Airports2CountriesMapTest {
 
     final String airportsFilePath = "../app/data/airports2countries.txt";
 
@@ -22,6 +22,11 @@ public class Airports2CountriesMapTests {
         mapToTest = new Airports2CountriesMap(airportsFilePath);
     }
 
+    /**
+     * Проверяет правильность работы отображателя
+     * названий аэропортов в соответствующие им страны
+     * @throws IOException
+     */
     @Test
     public void shouldMapAllAirportsToCountries() throws IOException {
         Path filePath = FileSystems.getDefault().getPath(airportsFilePath);

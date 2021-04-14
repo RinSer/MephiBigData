@@ -8,6 +8,6 @@ CREATE TABLE counts (
     time timestamp,
     departure text,
     arrival text,
-    count int,
+    count bigint,
     PRIMARY KEY ((departure, arrival), time)
 );

@@ -9,6 +9,13 @@ import java.nio.file.Path;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+/**
+ * Отображатель аэропортов в страны
+ * Загружает пары названий аэропортов и стран,
+ * разделенные табом из файла, затем преобразует
+ * их в хешмэп и предоставляет метод,
+ * возвращающий название страны по названию аэропорта
+ */
 public class Airports2CountriesMap implements Serializable {
 
     final Map<String, String> airports2countries;

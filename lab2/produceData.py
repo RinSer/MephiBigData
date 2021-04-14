@@ -1,4 +1,4 @@
-import os, requests, json
+import os, sys, requests, json
 from kafka import KafkaProducer
 
 '''
@@ -16,7 +16,8 @@ def on_send_error(excp):
     print(excp)
 
 params = {
-  'access_key': os.environ['AVIA_TOKEN']
+  'access_key': os.environ['AVIA_TOKEN'],
+  'offset': int(sys.argv[1]) if len(sys.argv) > 1 else 0
 }
 
 api_result = requests.get('http://api.aviationstack.com/v1/flights', params)

@@ -15,6 +15,10 @@ import java.util.List;
 
 public class AggregateFlightsTest {
 
+    /**
+     * Проверяет правильность исполнения аггрегирующей функции
+     * @throws IOException
+     */
     @Test
     public void flightsShouldBeHourlyAggregated() throws IOException {
         SparkConf sparkConf = new SparkConf();
@@ -43,7 +47,8 @@ public class AggregateFlightsTest {
 
         Dataset<Row> testStream = spark.createDataFrame(inputRows, schema);
 
-        Dataset<Row> output = FlightsAggregationApp.aggregateFlights(testStream);
+        String airportsFilePath = "../app/data/airports2countries.txt";
+        Dataset<Row> output = FlightsAggregationApp.aggregateFlights(testStream, airportsFilePath);
 
         List<String> flights = output.select(
                 output.col("time"),
@@ -51,7 +56,7 @@ public class AggregateFlightsTest {
                 output.col("arrival"),
                 output.col("count"))
                 .map((MapFunction<Row, String>) r ->
-                        r.getTimestamp(0).toString() + "," + r.getString(1) + r.getString(2) + "," + r.getLong(3),
+                        r.getTimestamp(0) + "," + r.getString(1) + r.getString(2) + "," + r.getLong(3),
                         Encoders.STRING())
                 .collectAsList();
 
